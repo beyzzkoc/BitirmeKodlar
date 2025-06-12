@@ -1,0 +1,41 @@
+from google.colab import drive
+drive.mount("/content/drive")
+
+import os
+if not os.path.exists('/content/drive/MyDrive/Bitirme2/yolov5'):
+    !git clone https://github.com/ultralytics/yolov5 /content/yolov5
+    !cp -r /content/yolov5 /content/drive/MyDrive/Bitirme2/yolov5
+
+%cd /content/drive/MyDrive/Bitirme2/yolov5
+!pip install -qr requirements.txt
+
+import torch
+from IPython.display import Image, clear_output
+print(f"Setup complete. Using torch {torch.__version__} ({torch.cuda.get_device_properties(0).name if torch.cuda.is_available() else 'CPU'})")
+
+%cd /content/drive/MyDrive/Bitirme2/yolov5
+
+!python train.py \
+    --img 640 \
+    --batch 16 \
+    --epochs 200 \
+    --data /content/drive/MyDrive/Bitirme2/data.yaml \
+    --weights yolov5l.pt \
+    --name dioryolov5_18mayıs \
+    --project /content/drive/MyDrive/Bitirme2/yolov5_dosyalar \
+    --patience 10 \
+    --device 0 \
+    --cache \
+    --exist-ok
+
+%load_ext tensorboard
+%tensorboard --logdir /content/drive/MyDrive/Bitirme2/yolov5_dosyalar/dioryolov5_18mayıs
+
+!python detect.py \
+--weights /content/drive/MyDrive/Bitirme2/yolov5_dosyalar/dioryolov5_18mayıs/weights/best.pt \
+--img 416 \
+--conf 0.2 \
+--source /content/drive/MyDrive/Bitirme2/DIOR_full_split_new18/DIOR_full_split/test/images/00043.jpg \
+--project /content/drive/MyDrive/Bitirme2/yolov5_dosyalar/dioryolov5_18mayıs \
+--name detect_output \
+--exist-ok
