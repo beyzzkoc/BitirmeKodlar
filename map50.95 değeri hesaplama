@@ -1,0 +1,69 @@
+from google.colab import drive
+drive.mount('/content/drive')
+
+!git clone https://github.com/ultralytics/yolov5
+%cd yolov5
+
+!pip install -r requirements.txt
+
+
+!python val.py \
+  --data /content/drive/MyDrive/Bitirme2/data1.yaml \
+  --weights /content/drive/MyDrive/Bitirme2/yolov5_dosyalar/dioryolov5_18mayıs/weights/best.pt \
+  --task test \
+  --img 640 \
+  --save-json \
+  --save-txt \
+  --project /content/drive/MyDrive/Bitirme2/map50_95 \
+  --name resultmap50_90Gradcamm1
+
+-----
+!python val.py \
+  --data /content/drive/MyDrive/Bitirme2/data1.yaml \
+  --weights /content/drive/MyDrive/Bitirme2/yolov5_dosyalar/dioryolov5_18mayıs/weights/best.pt \
+  --task test \
+  --img 640 \
+  --save-json \
+  --save-txt \
+  --project /content/drive/MyDrive/Bitirme2/map50_95 \
+  --name resultmap50_90Gradcamm2
+--------
+!python val.py \
+  --data /content/drive/MyDrive/Bitirme2/data1.yaml \
+  --weights /content/drive/MyDrive/Bitirme2/yolov5_dosyalar/dioryolov5_18mayıs/weights/best.pt \
+  --task test \
+  --img 640 \
+  --save-json \
+  --save-txt \
+  --project /content/drive/MyDrive/Bitirme2/map50_95 \
+  --name resultmap50_90Gradcamppm1
+-----
+!python val.py \
+  --data /content/drive/MyDrive/Bitirme2/data1.yaml \
+  --weights /content/drive/MyDrive/Bitirme2/yolov5_dosyalar/dioryolov5_18mayıs/weights/best.pt \
+  --task test \
+  --img 640 \
+  --save-json \
+  --save-txt \
+  --project /content/drive/MyDrive/Bitirme2/map50_95 \
+  --name resultmap50_90Gradcamppm2
+----
+!python val.py \
+  --data /content/drive/MyDrive/Bitirme2/data1.yaml \
+  --weights /content/drive/MyDrive/Bitirme2/yolov5_dosyalar/dioryolov5_18mayıs/weights/best.pt \
+  --task test \
+  --img 640 \
+  --save-json \
+  --save-txt \
+  --project /content/drive/MyDrive/Bitirme2/map50_95 \
+  --name resultmap50_90Eigencamm1_9
+------
+!python val.py \
+  --data /content/drive/MyDrive/Bitirme2/data1.yaml \
+  --weights /content/drive/MyDrive/Bitirme2/yolov5_dosyalar/dioryolov5_18mayıs/weights/best.pt \
+  --task test \
+  --img 640 \
+  --save-json \
+  --save-txt \
+  --project /content/drive/MyDrive/Bitirme2/map50_95 \
+  --name resultmap50_90Eigencamm2_9
