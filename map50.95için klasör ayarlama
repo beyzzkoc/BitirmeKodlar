@@ -1,0 +1,38 @@
+from google.colab import drive
+drive.mount('/content/drive')
+
+import os
+import shutil
+
+# Klasör yolları
+image_source = "/content/drive/MyDrive/Bitirme2/gradcammasktestsonuc-2/m2"
+label_source = "/content/drive/MyDrive/Bitirme2/DIOR_full/labels"
+
+# Hedef klasörler
+base_target = "/content/drive/MyDrive/Bitirme2/Gradcamm2"
+images_target = os.path.join(base_target, "images")
+labels_target = os.path.join(base_target, "labels")
+
+# Hedef klasörleri oluştur
+os.makedirs(images_target, exist_ok=True)
+os.makedirs(labels_target, exist_ok=True)
+
+# Resimleri ve etiketleri kopyala
+for filename in os.listdir(image_source):
+    if filename.endswith(".png"):
+        # Görüntüyü kopyala
+        src_image_path = os.path.join(image_source, filename)
+        dst_image_path = os.path.join(images_target, filename)
+        shutil.copy2(src_image_path, dst_image_path)
+
+        # Karşılık gelen label dosyasını bul
+        base_name = filename.replace("_m2.png","")
+        label_filename = base_name + ".txt"
+        src_label_path = os.path.join(label_source, label_filename)
+
+        if os.path.exists(src_label_path):
+            new_label_filename = base_name + "_m2.txt"
+            dst_label_path = os.path.join(labels_target, new_label_filename)
+            shutil.copy2(src_label_path, dst_label_path)
+        else:
+            print(f"Uyarı: {label_filename} bulunamadı.")
