@@ -1,0 +1,265 @@
+from google.colab import drive
+drive.mount('/content/drive')
+!git clone https://github.com/pourmand1376/yolov5/
+cd yolov5
+%load_ext autoreload
+%autoreload 2
+!git checkout add_gradcam
+!git pull
+!pip install -qqr requirements.txt
+!pip install grad-cam==1.4.6 -qq
+import torch
+
+# Modeli GitHub'dan yükle (internetten indirir)
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='/content/drive/MyDrive/Bitirme2/best18mayis.pt', force_reload=True)
+
+# Görsel yolu
+img = '/content/drive/MyDrive/Bitirme2/DIOR_full_split_new18/DIOR_full_split/test/images/00043.jpg'
+
+# Tahmin yap
+results = model(img)
+
+# Sonuçları göster
+results.show()
+
+!git clone -b add_gradcam https://github.com/pourmand1376/yolov5.git
+%cd yolov5
+
+import os
+import cv2
+import numpy as np
+from glob import glob
+from explainer.explainer import run
+
+# ======================
+# Girdi/Çıktı klasörleri
+# ======================
+input_dir = "/content/drive/MyDrive/Bitirme2/DIOR_full_split_new18/DIOR_full_split/test/images"
+base_output_dir = "/content/drive/MyDrive/Bitirme2/eigencammasktestsonuc"
+cam_dir = os.path.join(base_output_dir, "cam")
+m1_dir = os.path.join(base_output_dir, "m1")
+m2_dir = os.path.join(base_output_dir, "m2")
+
+# Klasörleri oluştur
+for d in [cam_dir, m1_dir, m2_dir]:
+    os.makedirs(d, exist_ok=True)
+
+# Görsel yolları
+image_paths = glob(os.path.join(input_dir, "*.jpg"))  # .png varsa uzatabilirim
+
+# YOLO class listesi
+class_names = ["Expressway-Service-area","Expressway-toll-station",
+               "airplane","airport","baseballfield","basketballcourt","bridge","chimney",
+               "dam","golffield","groundtrackfield","harbor","overpass","ship","stadium",
+               "storagetank","tenniscourt","trainstation","vehicle","windmill"]
+
+weights_path = "/content/drive/MyDrive/Bitirme2/best18mayis.pt"
+
+# ======================
+# İşleme döngüsü
+# ======================
+for img_path in image_paths:
+    base = os.path.splitext(os.path.basename(img_path))[0]
+    print(f"▶ İşleniyor: {base}")
+
+    # 1. GradCAM
+    image_vis, grayscale_cam = run(
+        source=img_path,
+        method="EigenCAM",
+        layer=9,
+        class_names=class_names,
+        weights=weights_path
+    )
+
+    # 2. Normalize + Otsu threshold
+# 2. Normalize + Otsu threshold
+    if grayscale_cam is None or not isinstance(grayscale_cam, np.ndarray):
+        print(f"❌ Uyarı: {base} için geçerli bir GradCAM çıktısı yok, atlanıyor.")
+        continue
+
+    if len(grayscale_cam.shape) == 3:
+        grayscale_cam = cv2.cvtColor(grayscale_cam, cv2.COLOR_BGR2GRAY)
+
+    cam_uint8 = cv2.normalize(grayscale_cam, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    _, mask = cv2.threshold(cam_uint8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    mask_bool = mask > 128
+
+    # 3. Orijinal resmi yükle
+    original = cv2.imread(img_path)
+    original = cv2.resize(original, (mask.shape[1], mask.shape[0]))
+
+    # 4. M1 ve M2 maskeleri
+    m1 = original.copy()
+    m1[mask_bool] = 0
+
+    m2 = np.zeros_like(original)
+    m2[mask_bool] = original[mask_bool]
+
+    # 5. Kaydet
+    cv2.imwrite(os.path.join(cam_dir, f"{base}_cam.jpg"), cv2.cvtColor(image_vis, cv2.COLOR_RGB2BGR))
+
+    cv2.imwrite(os.path.join(m1_dir, f"{base}_m1.png"), m1)
+    cv2.imwrite(os.path.join(m2_dir, f"{base}_m2.png"), m2)
+
+print("✅ Tüm görseller başarıyla işlendi ve kayıt edildi.")
+
+##gradcam için
+
+import os
+import cv2
+import numpy as np
+from glob import glob
+from explainer.explainer import run
+
+# ======================
+# Girdi/Çıktı klasörleri
+# ======================
+input_dir = "/content/drive/MyDrive/Bitirme2/DIOR_full_split_new18/DIOR_full_split/test/images"
+base_output_dir = "/content/drive/MyDrive/Bitirme2/mask"
+cam_dir = os.path.join(base_output_dir, "cam")
+m1_dir = os.path.join(base_output_dir, "m1")
+m2_dir = os.path.join(base_output_dir, "m2")
+
+# Klasörleri oluştur
+for d in [cam_dir, m1_dir, m2_dir]:
+    os.makedirs(d, exist_ok=True)
+
+# Görsel yolları
+image_paths = glob(os.path.join(input_dir, "*.jpg"))  # .png varsa uzatabilirim
+
+# YOLO class listesi
+class_names = ["Expressway-Service-area","Expressway-toll-station",
+               "airplane","airport","baseballfield","basketballcourt","bridge","chimney",
+               "dam","golffield","groundtrackfield","harbor","overpass","ship","stadium",
+               "storagetank","tenniscourt","trainstation","vehicle","windmill"]
+
+weights_path = "/content/drive/MyDrive/Bitirme2/best18mayis.pt"
+
+# ======================
+# İşleme döngüsü
+# ======================
+for img_path in image_paths:
+    base = os.path.splitext(os.path.basename(img_path))[0]
+    print(f"▶ İşleniyor: {base}")
+
+    # 1. GradCAM
+    image_vis, grayscale_cam = run(
+        source=img_path,
+        method="GradCAM",
+        layer=-2,
+        class_names=class_names,
+        weights=weights_path
+    )
+
+    # 2. Normalize + Otsu threshold
+# 2. Normalize + Otsu threshold
+    if grayscale_cam is None or not isinstance(grayscale_cam, np.ndarray):
+        print(f"❌ Uyarı: {base} için geçerli bir GradCAM çıktısı yok, atlanıyor.")
+        continue
+
+    if len(grayscale_cam.shape) == 3:
+        grayscale_cam = cv2.cvtColor(grayscale_cam, cv2.COLOR_BGR2GRAY)
+
+    cam_uint8 = cv2.normalize(grayscale_cam, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    _, mask = cv2.threshold(cam_uint8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    mask_bool = mask > 128
+
+    # 3. Orijinal resmi yükle
+    original = cv2.imread(img_path)
+    original = cv2.resize(original, (mask.shape[1], mask.shape[0]))
+
+    # 4. M1 ve M2 maskeleri
+    m1 = original.copy()
+    m1[mask_bool] = 0
+
+    m2 = np.zeros_like(original)
+    m2[mask_bool] = original[mask_bool]
+
+    # 5. Kaydet
+    cv2.imwrite(os.path.join(cam_dir, f"{base}_cam.jpg"), cv2.cvtColor(image_vis, cv2.COLOR_RGB2BGR))
+
+    cv2.imwrite(os.path.join(m1_dir, f"{base}_m1.png"), m1)
+    cv2.imwrite(os.path.join(m2_dir, f"{base}_m2.png"), m2)
+
+print("✅ Tüm görseller başarıyla işlendi ve kayıt edildi.")
+
+##gradcampp için 
+
+import os
+import cv2
+import numpy as np
+from glob import glob
+from explainer.explainer import run
+
+# ======================
+# Girdi/Çıktı klasörleri
+# ======================
+input_dir = "/content/drive/MyDrive/Bitirme2/DIOR_full_split_new18/DIOR_full_split/test/images"
+base_output_dir = "/content/drive/MyDrive/Bitirme2/gradcamppmasktestsonuc"
+cam_dir = os.path.join(base_output_dir, "cam")
+m1_dir = os.path.join(base_output_dir, "m1")
+m2_dir = os.path.join(base_output_dir, "m2")
+
+# Klasörleri oluştur
+for d in [cam_dir, m1_dir, m2_dir]:
+    os.makedirs(d, exist_ok=True)
+
+# Görsel yolları
+image_paths = glob(os.path.join(input_dir, "*.jpg"))  # .png varsa uzatabilirim
+
+# YOLO class listesi
+class_names = ["Expressway-Service-area","Expressway-toll-station",
+               "airplane","airport","baseballfield","basketballcourt","bridge","chimney",
+               "dam","golffield","groundtrackfield","harbor","overpass","ship","stadium",
+               "storagetank","tenniscourt","trainstation","vehicle","windmill"]
+
+weights_path = "/content/drive/MyDrive/Bitirme2/best18mayis.pt"
+
+# ======================
+# İşleme döngüsü
+# ======================
+for img_path in image_paths:
+    base = os.path.splitext(os.path.basename(img_path))[0]
+    print(f"▶ İşleniyor: {base}")
+
+    # 1. GradCAM
+    image_vis, grayscale_cam = run(
+        source=img_path,
+        method="GradCAMPlusPlus",
+        layer=-2,
+        class_names=class_names,
+        weights=weights_path
+    )
+
+    # 2. Normalize + Otsu threshold
+# 2. Normalize + Otsu threshold
+    if grayscale_cam is None or not isinstance(grayscale_cam, np.ndarray):
+        print(f"❌ Uyarı: {base} için geçerli bir GradCAM çıktısı yok, atlanıyor.")
+        continue
+
+    if len(grayscale_cam.shape) == 3:
+        grayscale_cam = cv2.cvtColor(grayscale_cam, cv2.COLOR_BGR2GRAY)
+
+    cam_uint8 = cv2.normalize(grayscale_cam, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    _, mask = cv2.threshold(cam_uint8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    mask_bool = mask > 128
+
+    # 3. Orijinal resmi yükle
+    original = cv2.imread(img_path)
+    original = cv2.resize(original, (mask.shape[1], mask.shape[0]))
+
+    # 4. M1 ve M2 maskeleri
+    m1 = original.copy()
+    m1[mask_bool] = 0
+
+    m2 = np.zeros_like(original)
+    m2[mask_bool] = original[mask_bool]
+
+    # 5. Kaydet
+    cv2.imwrite(os.path.join(cam_dir, f"{base}_cam.jpg"), cv2.cvtColor(image_vis, cv2.COLOR_RGB2BGR))
+
+    cv2.imwrite(os.path.join(m1_dir, f"{base}_m1.png"), m1)
+    cv2.imwrite(os.path.join(m2_dir, f"{base}_m2.png"), m2)
+
+print("✅ Tüm görseller başarıyla işlendi ve kayıt edildi.")
+
