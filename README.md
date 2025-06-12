@@ -1,0 +1,1 @@
+Bu projede, öncelikle YOLOv5 modeli ile optik uzaktan algılama görüntüleri üzerinde hedef tespiti eğitimi gerçekleştirilmiştir. Eğitilen modelin kararlarını görselleştirmek için GradCAM, GradCAM++ ve EigenCAM yöntemleri uygulanmıştır. Son aşamada, mAP@50–95 metriği ile model başarımını değerlendirmek amacıyla gerekli klasör yapısı hazırlanarak sonuçlar bulunmuştur.
